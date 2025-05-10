@@ -1,0 +1,164 @@
+from datetime import datetime
+
+class Student:
+    def __init__(self, name):
+        self.name = name
+        self.courses = []
+
+    def enroll(self, course):
+        if course not in self.courses:
+            self.courses.append(course)
+            course.add_student(self)
+
+    def show_attendance_report(self):
+        print(f"\n[Frekwencja] {self.name}")
+        for course in self.courses:
+            attendance = [a for a in course.attendance if a.student == self]
+            present = sum(1 for a in attendance if a.is_present)
+            total = len(attendance)
+            print(f"- {course.title}: {present}/{total} obecności")
+
+    def show_grades(self):
+        print(f"\n[Oceny] {self.name}")
+        for course in self.courses:
+            grade = next((g for g in course.grades if g.student == self), None)
+            print(f"- {course.title}: {grade.value if grade else 'brak'}")
+
+
+class Course:
+    def __init__(self, title):
+        self.title = title
+        self.students = []
+        self.grades = []
+        self.attendance = []
+
+    def add_student(self, student):
+        if student not in self.students:
+            self.students.append(student)
+
+    def assign_grade(self, student, value):
+        self.grades.append(Grade(student, self, value))
+
+    def mark_attendance(self, student, date, is_present):
+        self.attendance.append(Attendance(student, self, date, is_present))
+
+
+class Grade:
+    def __init__(self, student, course, value):
+        self.student = student
+        self.course = course
+        self.value = value
+
+
+class Attendance:
+    def __init__(self, student, course, date, is_present):
+        self.student = student
+        self.course = course
+        self.date = date
+        self.is_present = is_present
+
+
+# ======= MENU LOGIKA =======
+
+students = []
+courses = []
+
+def select_student():
+    if not students:
+        print("Brak studentów.")
+        return None
+    for i, s in enumerate(students, 1):
+        print(f"{i}. {s.name}")
+    idx = int(input("Wybierz numer studenta: ")) - 1
+    return students[idx]
+
+def select_course():
+    if not courses:
+        print("Brak kursów.")
+        return None
+    for i, c in enumerate(courses, 1):
+        print(f"{i}. {c.title}")
+    idx = int(input("Wybierz numer kursu: ")) - 1
+    return courses[idx]
+
+def add_student():
+    name = input("Podaj imię studenta: ")
+    students.append(Student(name))
+    print("Dodano studenta.")
+
+def add_course():
+    title = input("Podaj nazwę kursu: ")
+    courses.append(Course(title))
+    print("Dodano kurs.")
+
+def enroll_student():
+    student = select_student()
+    course = select_course()
+    if student and course:
+        student.enroll(course)
+        print("Zapisano studenta na kurs.")
+
+def assign_grade():
+    student = select_student()
+    course = select_course()
+    if student and course:
+        value = float(input("Podaj ocenę: "))
+        course.assign_grade(student, value)
+        print("Wystawiono ocenę.")
+
+def add_attendance():
+    student = select_student()
+    course = select_course()
+    if student and course:
+        date_str = input("Podaj datę (YYYY-MM-DD): ")
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+        is_present = input("Obecny? (t/n): ").lower() == 't'
+        course.mark_attendance(student, date, is_present)
+        print("Dodano frekwencję.")
+
+def show_attendance():
+    student = select_student()
+    if student:
+        student.show_attendance_report()
+
+def show_grades():
+    student = select_student()
+    if student:
+        student.show_grades()
+
+
+# ======= URUCHOMIENIE =======
+def main():
+    while True:
+        print("\n=== MENU ===")
+        print("1. Dodaj studenta")
+        print("2. Dodaj kurs")
+        print("3. Zapisz studenta na kurs")
+        print("4. Wystaw ocenę")
+        print("5. Dodaj frekwencję")
+        print("6. Pokaż raport frekwencji")
+        print("7. Pokaż oceny studenta")
+        print("0. Wyjście")
+        choice = input("Wybierz opcję: ")
+
+        if choice == "1":
+            add_student()
+        elif choice == "2":
+            add_course()
+        elif choice == "3":
+            enroll_student()
+        elif choice == "4":
+            assign_grade()
+        elif choice == "5":
+            add_attendance()
+        elif choice == "6":
+            show_attendance()
+        elif choice == "7":
+            show_grades()
+        elif choice == "0":
+            break
+        else:
+            print("Nieznana opcja.")
+
+if __name__ == "__main__":
+    main()
